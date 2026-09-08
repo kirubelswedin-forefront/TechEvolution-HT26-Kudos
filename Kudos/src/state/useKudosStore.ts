@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { Category, Kudos } from '../domain/kudos'
-import { canSendKudos, createKudos } from '../domain/kudos'
+import { canModifyKudos, canSendKudos, createKudos, updateKudos } from '../domain/kudos'
 import { loadKudos, saveKudos } from '../infrastructure/kudosStorage'
 
 interface AddKudosInput {
@@ -28,5 +28,30 @@ export function useKudosStore() {
     })
   }, [])
 
-  return { kudos, addKudos }
+  const editKudos = useCallback(
+    (id: string, currentUserId: string, input: { message: string; category: Category }) => {
+      if (!input.message.trim()) return
+
+      setKudos((current) => {
+        // Re-checked here, not just in the UI, so this can never be
+        // bypassed — same rationale as canSendKudos above.
+        const next = current.map((item) =>
+          item.id === id && canModifyKudos(currentUserId, item) ? updateKudos(item, input) : item,
+        )
+        saveKudos(next)
+        return next
+      })
+    },
+    [],
+  )
+
+  const deleteKudos = useCallback((id: string, currentUserId: string) => {
+    setKudos((current) => {
+      const next = current.filter((item) => !(item.id === id && canModifyKudos(currentUserId, item)))
+      saveKudos(next)
+      return next
+    })
+  }, [])
+
+  return { kudos, addKudos, editKudos, deleteKudos }
 }

@@ -11,9 +11,12 @@ interface KudosFeedProps {
   kudos: Kudos[]
   colleagues: Colleague[]
   sortMode: FeedSortMode
+  currentUserId: string
+  onEdit: (id: string, input: { message: string; category: Kudos['category'] }) => void
+  onDelete: (id: string) => void
 }
 
-function KudosFeed({ kudos, colleagues, sortMode }: KudosFeedProps) {
+function KudosFeed({ kudos, colleagues, sortMode, currentUserId, onEdit, onDelete }: KudosFeedProps) {
   const sortedKudos = sortKudosForDisplay(kudos, colleagues, sortMode)
   const groupByRole = sortMode.kind === 'role'
   let previousRole: string | null = null
@@ -37,7 +40,7 @@ function KudosFeed({ kudos, colleagues, sortMode }: KudosFeedProps) {
                     <h3>{role}</h3>
                   </li>
                 )}
-                <KudosCard kudos={item} />
+                <KudosCard kudos={item} currentUserId={currentUserId} onEdit={onEdit} onDelete={onDelete} />
               </Fragment>
             )
           })}

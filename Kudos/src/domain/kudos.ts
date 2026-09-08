@@ -20,6 +20,7 @@ export interface Kudos {
   message: string
   category: Category
   createdAt: string
+  edited?: boolean
 }
 
 export const MAX_MESSAGE_LENGTH = 200
@@ -32,6 +33,11 @@ export function isValidMessage(message: string): boolean {
 // Self-kudos are disallowed — a kudos lifts up a colleague, not yourself.
 export function canSendKudos(from: string, to: string, message: string): boolean {
   return from !== to && isValidMessage(message)
+}
+
+// Only the original sender may edit or delete their own kudos.
+export function canModifyKudos(currentUserId: string, kudos: Kudos): boolean {
+  return currentUserId === kudos.from
 }
 
 export function createKudos(input: {
@@ -47,5 +53,20 @@ export function createKudos(input: {
     message: input.message.trim(),
     category: input.category,
     createdAt: new Date().toISOString(),
+    edited: false,
+  }
+}
+
+// Edits update message/category only — id, from, to and createdAt never
+// change, and no edit timestamp is tracked (only the boolean flag below).
+export function updateKudos(
+  kudos: Kudos,
+  input: { message: string; category: Category },
+): Kudos {
+  return {
+    ...kudos,
+    message: input.message.trim(),
+    category: input.category,
+    edited: true,
   }
 }

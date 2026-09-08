@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canSendKudos, createKudos, isValidMessage, MAX_MESSAGE_LENGTH } from './kudos'
+import { canModifyKudos, canSendKudos, createKudos, isValidMessage, MAX_MESSAGE_LENGTH, updateKudos } from './kudos'
 
 describe('isValidMessage', () => {
   it('rejects an empty message', () => {
@@ -63,5 +63,62 @@ describe('createKudos', () => {
     const kudos = createKudos({ from: 'c01', to: 'c02', message: 'thanks', category: 'CRAFT' })
 
     expect(new Date(kudos.createdAt).toISOString()).toBe(kudos.createdAt)
+  })
+
+  it('is not marked as edited', () => {
+    const kudos = createKudos({ from: 'c01', to: 'c02', message: 'thanks', category: 'CRAFT' })
+
+    expect(kudos.edited).toBe(false)
+  })
+})
+
+describe('updateKudos', () => {
+  it('trims the updated message', () => {
+    const kudos = createKudos({ from: 'c01', to: 'c02', message: 'thanks', category: 'CRAFT' })
+
+    const updated = updateKudos(kudos, { message: '  updated  ', category: 'CRAFT' })
+
+    expect(updated.message).toBe('updated')
+  })
+
+  it('updates the category', () => {
+    const kudos = createKudos({ from: 'c01', to: 'c02', message: 'thanks', category: 'CRAFT' })
+
+    const updated = updateKudos(kudos, { message: 'thanks', category: 'TEAMWORK' })
+
+    expect(updated.category).toBe('TEAMWORK')
+  })
+
+  it('keeps id, from, to and createdAt unchanged', () => {
+    const kudos = createKudos({ from: 'c01', to: 'c02', message: 'thanks', category: 'CRAFT' })
+
+    const updated = updateKudos(kudos, { message: 'updated', category: 'TEAMWORK' })
+
+    expect(updated.id).toBe(kudos.id)
+    expect(updated.from).toBe(kudos.from)
+    expect(updated.to).toBe(kudos.to)
+    expect(updated.createdAt).toBe(kudos.createdAt)
+  })
+
+  it('marks the kudos as edited', () => {
+    const kudos = createKudos({ from: 'c01', to: 'c02', message: 'thanks', category: 'CRAFT' })
+
+    const updated = updateKudos(kudos, { message: 'updated', category: 'CRAFT' })
+
+    expect(updated.edited).toBe(true)
+  })
+})
+
+describe('canModifyKudos', () => {
+  it('allows the original sender to modify their kudos', () => {
+    const kudos = createKudos({ from: 'c01', to: 'c02', message: 'thanks', category: 'CRAFT' })
+
+    expect(canModifyKudos('c01', kudos)).toBe(true)
+  })
+
+  it('rejects anyone other than the original sender', () => {
+    const kudos = createKudos({ from: 'c01', to: 'c02', message: 'thanks', category: 'CRAFT' })
+
+    expect(canModifyKudos('c02', kudos)).toBe(false)
   })
 })

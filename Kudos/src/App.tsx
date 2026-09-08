@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useKudosStore } from './state/useKudosStore'
+import { useCurrentUser } from './state/useCurrentUser'
 import { colleagues } from './infrastructure/colleagues'
 import { DEFAULT_FEED_SORT_MODE } from './domain/feedSort'
 import type { FeedSortMode } from './domain/feedSort'
@@ -9,7 +10,8 @@ import FeedSortControl from './components/FeedSortControl'
 import NeedsKudosSection from './components/NeedsKudosSection'
 
 function App() {
-  const { kudos, addKudos } = useKudosStore()
+  const { kudos, addKudos, editKudos, deleteKudos } = useKudosStore()
+  const { currentUserId, setCurrentUserId } = useCurrentUser(colleagues[0]?.id ?? '')
   const [sortMode, setSortMode] = useState<FeedSortMode>(DEFAULT_FEED_SORT_MODE)
 
   return (
@@ -19,9 +21,16 @@ function App() {
         <p>Short, public shoutouts between colleagues.</p>
       </header>
       <main className="app-content">
-        <KudosForm onSend={addKudos} />
+        <KudosForm onSend={addKudos} currentUserId={currentUserId} onCurrentUserChange={setCurrentUserId} />
         <FeedSortControl sortMode={sortMode} onChange={setSortMode} />
-        <KudosFeed kudos={kudos} colleagues={colleagues} sortMode={sortMode} />
+        <KudosFeed
+          kudos={kudos}
+          colleagues={colleagues}
+          sortMode={sortMode}
+          currentUserId={currentUserId}
+          onEdit={(id, input) => editKudos(id, currentUserId, input)}
+          onDelete={(id) => deleteKudos(id, currentUserId)}
+        />
         <NeedsKudosSection colleagues={colleagues} kudos={kudos} />
       </main>
     </>
